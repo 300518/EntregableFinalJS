@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Buscador Pokémon</title>
+</head>
+<body>
+  <h1>Buscar Pokémon</h1>
+
+  <input id="pokemonInput" type="text" placeholder="Ingresa el nombre del Pokémon" />
+  <button id="buscar">Buscar</button>
+
+  <a>Favor Elegir un pokemon inicial</a>
+  <section class="grid" aria-label="Pokémon iniciales">
+    <article class="card">
+    <img class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/152.png" alt="Chikorita sprite">
+    <div class="name">Chikorita</div>
+    <div class="row"><span class="badge">Generación 2</span></div>
+    </article>
+    
+    
+    <article class="card">
+    <img class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/393.png" alt="Piplup sprite">
+    <div class="name">Piplup</div>
+    <div class="row"><span class="badge">Generación 4</span></div>
+    </article>
+    
+    
+    <article class="card">
+    <img class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/498.png" alt="Tepig sprite">
+    <div class="name">Tepig</div>
+    <div class="row"><span class="badge">Generación 5</span></div>
+    </article>
+    
+    
+    <article class="card">
+    <img class="sprite" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="Pikachu sprite">
+    <div class="name">Pikachu</div>
+    <div class="row"><span class="badge">Extra</span></div>
+    </article>
+    </section>
+
+  <div id="resultado"></div>
+
+  <script src="js/app.js"></script>
+  <script src="js/clases.js"></script>
+</body>
+</html>
