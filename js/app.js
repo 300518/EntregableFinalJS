@@ -16,6 +16,7 @@ document.getElementById("buscarTipoPokemon").addEventListener("click", async () 
     return;
   }
 
+
   const lista = await obtenerPokemonPorTipo(tipo);
 
   resultadoDivTipo.innerHTML = `
@@ -25,6 +26,22 @@ document.getElementById("buscarTipoPokemon").addEventListener("click", async () 
     </ul>
   `;
 });
+
+//Elegir Equipo
+const entrenador = new Entrenador("Alvarito",12);
+console.log(entrenador);
+document.getElementById("btnElegirPorTipo").addEventListener("click", async () => {
+  const tipo = document.getElementById("comboTipo").value;
+  console.log("aprete el botonß");
+  if (!tipo) {
+    alert("Debes seleccionar un tipo primero");
+    return;
+  }
+
+  await entrenadorEscogePorTipo(entrenador, tipo);
+});
+
+// termino
 
 async function buscarPokemon(nombrePokemon) {
 
@@ -114,3 +131,5 @@ async function cargarTiposPokemon() {
     console.error("Error al cargar tipos:", error);
   }
 }
+
+
