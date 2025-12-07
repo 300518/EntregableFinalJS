@@ -152,6 +152,16 @@ function seleccionarEntrenador(id) {
   renderEditor();
 }
 
+
+function esInicial(pokemon) {
+  return Array.isArray(pokemon.tipos) ? pokemon.tipos.includes('inicial') : pokemon.tipos === 'inicial';
+}
+
+
+function tieneInicial(entrenador) {
+  return entrenador.equipo.pokemones.some(esInicial);
+}
+
 async function manejarAgregarPorTipo() {
   const tipo = document.getElementById('comboTipoAdd').value;
   const msg = document.getElementById('msgEditor');
@@ -188,16 +198,24 @@ async function manejarAgregarPorTipo() {
 }
 
 async function manejarGuardarEntrenador() {
-  const ent = entrenadores.find(x => x.id === entrenadorSeleccionadoId);
-  const sel = Array.from(document.getElementsByName('pokemonInicial')).find(r => r.checked);
-  if (sel) {
-    const nombreIni = sel.value;
+  const entTemporal = entrenadores.find(entrenador => entrenador.id === entrenadorSeleccionadoId);
+  const seleccion = Array.from(document.getElementsByName('pokemonInicial')).find(radioSeleccionado => radioSeleccionado.checked);
+  if (seleccion) {
+
+  if (tieneInicial(entTemporal)) {
+      swal({ title: "Inicial ya asignado", 
+            text: "Este entrenador ya tiene un Pokémon inicial. Debes quitarlo antes de elegir otro.", 
+            icon: "warning" });
+      return;
+  }
+
+    const nombreIni = seleccion.value;
     const imagen = await obtenerImagenPokemon(nombreIni);
-    if (!ent.equipo.tienePokemon(nombreIni) && ent.equipo.puedeAgregar()) {
+    if (!entTemporal.equipo.tienePokemon(nombreIni) && entTemporal.equipo.puedeAgregar()) {
       const nuevoPokemonInicial = new Pokemon(nombreIni, 'inicial');
       nuevoPokemonInicial.sprite = imagen;
-      ent.equipo.pokemones.unshift(nuevoPokemonInicial);
-      ent.equipo.pokemones = ent.equipo.pokemones.slice(0, ent.equipo.max);
+      entTemporal.equipo.pokemones.unshift(nuevoPokemonInicial);
+      entTemporal.equipo.pokemones = entTemporal.equipo.pokemones.slice(0, entTemporal.equipo.max);
     }
   }
   guardarEntrenadores();
