@@ -1,85 +1,50 @@
 class Pokemon {
-    constructor(nombre, tipo) {
-      this.nombre = nombre;
-      this.tipo = tipo;            // puede ser string o array
-    }
-    informacion() {
-      return `${this.nombre} (Tipo: ${this.tipo})`;
-    }
+  constructor(nombre, tipos) {
+    this.nombre = nombre;
+    this.tipos = Array.isArray(tipos) ? tipos : [tipos];
   }
+}
 
 class Equipo {
-    constructor() {
-      this.pokemones = [];
-      this.maxPokemones = 6;
-    }
-  
-    agregarPokemon(pokemon) {
-      if (this.pokemones.length >= this.maxPokemones) {        
-        // agregar alerta
-        return;
-      }
-  
+  constructor(pokemones = []) {
+    this.pokemones = pokemones;
+    this.max = 6;
+  }
+  puedeAgregar() { return this.pokemones.length < this.max; }
+  tienePokemon(nombre) { return this.pokemones.some(p => p.nombre === nombre); }
+  agregar(pokemon) {
+    if (this.puedeAgregar() && !this.tienePokemon(pokemon.nombre)) {
       this.pokemones.push(pokemon);
+      return true;
     }
-  
-    quitarPokemon(nombre) {
-      this.pokemones = this.pokemones.filter(p => p.nombre !== nombre);
-    }
-  
-    listarEquipo() {
-      return this.pokemones.map(p => p.informacion()).join("\n");
-    }
+    return false;
+  }
+  quitar(nombre) {
+    this.pokemones = this.pokemones.filter(p => p.nombre !== nombre);
+  }
 }
-  
+
 class Entrenador {
-    constructor(nombre, edad) {
-      this.nombre = nombre;
-      this.edad = edad;
-      this.equipo = new Equipo();
-    }
-  
-    capturar(pokemon) {
-      this.equipo.agregarPokemon(pokemon);
-    }
-  
-    mostrarEquipo() {
-      console.log(`Equipo de ${this.nombre}:\n${this.equipo.listarEquipo()}`);
-    }
+  constructor(nombre, edad, equipo = null) {
+    this.id = Entrenador.generarId();
+    this.nombre = nombre;
+    this.edad = edad;
+    this.equipo = equipo ? new Equipo(equipo.pokemones.map(p => new Pokemon(p.nombre, p.tipos))) : new Equipo();
+  }
+  static generarId() {
+    return `t_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+  }
+  toPlain() {
+    return {
+      id: this.id,
+      nombre: this.nombre,
+      edad: this.edad,
+      equipo: { pokemones: this.equipo.pokemones.map(p => ({ nombre: p.nombre, tipos: p.tipos })) }
+    };
+  }
+  static fromPlain(obj) {
+    const en = new Entrenador(obj.nombre, obj.edad, obj.equipo);
+    en.id = obj.id;
+    return en;
+  }
 }
-
-//Funciones para generar equipo y entrenadores
-
-function elegirSeisPokemon(lista) {
-    const equipo = lista
-  
-    return equipo.slice(0, 6);
-  }
-
-function crearPokemon(nombres, tipo) {
-     return nombres.map(function(nombre) {
-        return new Pokemon(nombre, tipo, 1);
-      });
-  }
-
-  async function entrenadorEscogePorTipo(entrenador, tipo) {
-    // Obtener lista de pokémon de ese tipo
-    const lista = [
-        "charmander",
-        "charmeleon",
-        "charizard",
-        "vulpix",
-        "ninetales",
-        "growlithe",
-    ]
-  
-    
-    // Convertirlos a objetos Pokémon
-    const objetosPokemon = crearPokemon(lista, tipo);
-  
-    // Agregarlos al equipo
-    objetosPokemon.forEach(p => entrenador.capturar(p));
-  
-    console.log(`El entrenador ${entrenador.nombre} ha elegido estos Pokémon:`);
-    entrenador.mostrarEquipo();
-  }

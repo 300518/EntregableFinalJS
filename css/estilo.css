@@ -1,0 +1,6 @@
+body { padding: 1.25rem; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+    .sprite { width: 64px; height: 64px; }
+    .card-pokemon { display:flex; align-items:center; gap:.75rem; padding:.5rem; border:1px solid #e6e6e6; border-radius:8px; }
+    .team-list { display:flex; flex-direction:column; gap:.5rem; }
+    .muted { color:#666; font-size:.9rem; }
+    .note { margin-top:.5rem; color:#444; }

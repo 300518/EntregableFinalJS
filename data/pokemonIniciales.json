@@ -1,0 +1,7 @@
+
+[
+    { "nombre": "chikorita", "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/152.png" },
+    { "nombre": "pikachu",   "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"  },
+    { "nombre": "piplup",    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/393.png" },
+    { "nombre": "tepig",     "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/498.png" }
+]  

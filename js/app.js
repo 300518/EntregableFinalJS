@@ -1,135 +1,299 @@
-document.getElementById("buscar").addEventListener("click", () => {
-  const nombrePokemon = document.getElementById("pokemonInput").value.trim();
-  buscarPokemon(nombrePokemon);
-  const tipos = obtenerPokemonPorTipo('fire');
-  console.log(tipos);
-});
+//Se utlizan concepto de la api. 
+//sprite es la imagen del pokemon
+//se cargan las imagenes de los pokemon iniciales.
+let POKEMON_INICIALES = [];
 
-cargarTiposPokemon(); // función declara más abajo
-
-document.getElementById("buscarTipoPokemon").addEventListener("click", async () => {
-  const tipo = document.getElementById("comboTipo").value;
-  const resultadoDivTipo = document.getElementById("resultadoTipoPokemon");
-
-  if (!tipo) {
-    resultadoDivTipo.innerHTML = "<p>Se debe seleccionar un tipo.</p>";
-    return;
-  }
-
-
-  const lista = await obtenerPokemonPorTipo(tipo);
-
-  resultadoDivTipo.innerHTML = `
-    <h3>Pokemon de tipo ${tipo.toUpperCase()}</h3>
-    <ul>
-      ${lista.map(nombre => `<li>${nombre}</li>`).join("")}
-    </ul>
-  `;
-});
-
-//Elegir Equipo
-const entrenador = new Entrenador("Alvarito",12);
-console.log(entrenador);
-document.getElementById("btnElegirPorTipo").addEventListener("click", async () => {
-  const tipo = document.getElementById("comboTipo").value;
-  console.log("aprete el botonß");
-  if (!tipo) {
-    alert("Debes seleccionar un tipo primero");
-    return;
-  }
-
-  await entrenadorEscogePorTipo(entrenador, tipo);
-});
-
-// termino
-
-async function buscarPokemon(nombrePokemon) {
-
-  const resultadoDiv = document.getElementById("resultado");
-
-  if (!nombrePokemon) {
-    resultadoDiv.innerHTML = "<p>Ingresa un nombre válido.</p>";
-    return;
-  }
-
+// En  un prinicipio tenía un const con un arreglo con los pokemones iniciales. Lo reemplazo para cumplir la consigna 
+async function cargarPokemonIniciales() {
   try {
-    const respuesta = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombrePokemon.toLowerCase()}`);
-
-    if (!respuesta.ok) {
-      resultadoDiv.innerHTML = "<p>Pokémon no encontrado 😢</p>";
-      return;
-    }
-
-    const data = await respuesta.json();
-
-    resultadoDiv.innerHTML = `
-      <h2>${data.name.toUpperCase()}</h2>
-      <img src="${data.sprites.front_default}" alt="${data.name}">
-      <img src="${data.sprites.front_shiny}" alt="${data.name}">
-      <p><strong>Peso:</strong> ${data.weight}</p>
-      <p><strong>Altura:</strong> ${data.height}</p>
-      <p><strong>Tipo(s):</strong> ${data.types.map(t => t.type.name).join(", ")}</p>
-    `;
-  } catch (error) {
-    resultadoDiv.innerHTML = "<p>Error al conectar con PokeAPI.</p>";
-    console.error(error);
+    const respuestaJson = await fetch('data/pokemonIniciales.json');
+    if (!respuestaJson.ok) throw new Error(`HTTP ${respuestaJson.status}`);
+    POKEMON_INICIALES = await respuestaJson.json();
+  } catch (err) {
+    swal({ title: "Error", 
+            text: "No pudimos cargar los iniciales. Intenta de nuevo.", 
+            icon: "error" 
+          });
+    POKEMON_INICIALES = []; 
   }
 }
 
-async function obtenerPokemonPorTipo(tipo) {
-  try {
-    const respuesta = await fetch(`https://pokeapi.co/api/v2/type/${tipo.toLowerCase()}`);
+//Se utiliza el storage como indicó la tutora.
+const STORAGE_KEY = 'entrenadorPokemon_v1';
+let entrenadores = [];
+let entrenadorSeleccionadoId = null;
 
-    if (!respuesta.ok) {
-      throw new Error("Tipo no encontrado");
-    }
-
-    const data = await respuesta.json();
-
-    return data.pokemon.map(p => p.pokemon.name);
-
-  } catch (error) {
-    console.error("Error al obtener Pokémon por tipo:", error);
-    return [];
-  }
+function cargarEntrenadores() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try { return JSON.parse(raw).map(obj => Entrenador.fromPlain(obj)); }
+  catch { 
+    swal({
+      title: "Error",
+      text: "No es posible cargar a los entrenadores",
+      icon: "error",
+    });
+    return []; }
 }
 
-async function obtenerTiposPokemon() {
-  try {
-    const respuesta = await fetch("https://pokeapi.co/api/v2/type");
-
-    if (!respuesta.ok) {
-      throw new Error("No se pudo obtener la lista de tipos.");
-    }
-
-    const data = await respuesta.json();
-    return data.results.map(tipo => tipo.name);
-
-  } catch (error) {
-    console.error("Error:", error);
-    return [];
-  }
+function guardarEntrenadores() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entrenadores.map(e => e.toPlain())));
 }
 
-async function cargarTiposPokemon() {
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
+}
+
+function renderListaEntrenadores() {
+  const cont = document.getElementById('listaEntrenadores');
+  cont.innerHTML = '';
+  if (entrenadores.length === 0) {
+    cont.innerHTML = '<div class="alert alert-secondary">No hay entrenadores todavía.</div>';
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'list-group';
+  entrenadores.forEach(entrenadorcreado => {
+    const item = document.createElement('div');
+    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+    const left = document.createElement('div');
+    left.innerHTML = `<strong>${escapeHtml(entrenadorcreado.nombre)}</strong> <div class="muted">Edad: ${escapeHtml(String(entrenadorcreado.edad))}</div>`;
+    const actions = document.createElement('div');
+    const btnEditar = document.createElement('button');
+    btnEditar.className = 'btn btn-sm btn-outline-primary me-2';
+    btnEditar.textContent = 'Editar equipo';
+    btnEditar.addEventListener('click', () => seleccionarEntrenador(entrenadorcreado.id));
+    const btnEliminar = document.createElement('button');
+    btnEliminar.className = 'btn btn-sm btn-outline-danger';
+    btnEliminar.textContent = 'Eliminar';
+    btnEliminar.addEventListener('click', () => eliminarEntrenador(entrenadorcreado.id));
+    actions.appendChild(btnEditar);
+    actions.appendChild(btnEliminar);
+    item.appendChild(left);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+  cont.appendChild(list);
+}
+
+async function poblarTipos() {
+  const select = document.getElementById('comboTipoAdd');
+  select.innerHTML = '<option value="">-- Selecciona tipo --</option>';
   try {
-    const respuesta = await fetch("https://pokeapi.co/api/v2/type");
-    const data = await respuesta.json();
-
-    const select = document.getElementById("comboTipo");
-
+    const resp = await fetch('https://pokeapi.co/api/v2/type');
+    const data = await resp.json();
     data.results.forEach(t => {
-        if (t.name === "unknown" || t.name === "shadow") return;
+      if (t.name === 'unknown' || t.name === 'shadow') return;
+      const opt = document.createElement('option');
+      opt.value = t.name;
+      opt.textContent = t.name;
+      select.appendChild(opt);
+    });
+  } catch {
 
-      const opcion = document.createElement("option");
-      opcion.value = t.name;
-      opcion.textContent = t.name.toUpperCase();
-      select.appendChild(opcion);
+    swal({
+      title: "Advertencia",
+      text: "No es posible agregar los tipos de pokemon",
+      icon: "warning",
     });
 
-  } catch (error) {
-    console.error("Error al cargar tipos:", error);
   }
 }
 
+async function obtenerPokemonPorTipoLista(tipo) {
+  try {
+    const resp = await fetch(`https://pokeapi.co/api/v2/type/${tipo}`);
+    const data = await resp.json();
+    return data.pokemon.map(item => item.pokemon.name);
+  } catch { return []; }
+}
 
+function crearEntrenadorDesdeUI() {
+  const nombre = document.getElementById('inputNombre').value.trim();
+  const edad = parseInt(document.getElementById('inputEdad').value, 10) || 0;
+  const msg = document.getElementById('msgCrear');
+  msg.textContent = '';
+  if (!nombre) { msg.textContent = 'Nombre requerido.'; return; }
+  if (entrenadores.length >= 3) { 
+    
+    swal({
+      title: "Advertencia",
+      text: "No es posible agregar más de 3 entrenadores",
+      icon: "warning",
+    });
+    
+    return; }
+  entrenadores.push(new Entrenador(nombre, edad));
+  guardarEntrenadores();
+  renderListaEntrenadores();
+  document.getElementById('inputNombre').value = '';
+  swal({
+    title: "Creación",
+    text: "Has creado un nuevo entrenado",
+    icon: "success",
+  });
+}
+
+function eliminarEntrenador(id) {
+  entrenadores = entrenadores.filter(e => e.id !== id);
+  if (entrenadorSeleccionadoId === id) entrenadorSeleccionadoId = null;
+  guardarEntrenadores();
+  renderListaEntrenadores();
+  renderEditor();
+  swal({
+    title: "Eliminación",
+    text: "Has eliminado al entrenador",
+    icon: "success",
+  });
+}
+
+function seleccionarEntrenador(id) {
+  entrenadorSeleccionadoId = id;
+  renderEditor();
+}
+
+async function manejarAgregarPorTipo() {
+  const tipo = document.getElementById('comboTipoAdd').value;
+  const msg = document.getElementById('msgEditor');
+  msg.textContent = '';
+
+  if (!tipo) {
+    msg.textContent = 'Selecciona un tipo.';
+    return;
+  }
+
+  const ent = entrenadores.find(x => x.id === entrenadorSeleccionadoId);
+  if (!ent.equipo.puedeAgregar()) {
+    msg.textContent = 'Equipo completo.';
+    return;
+  }
+
+  const lista = await obtenerPokemonPorTipoLista(tipo);
+  const nombreElegido = lista.find(n => !ent.equipo.tienePokemon(n));
+
+  if (!nombreElegido) {
+    msg.textContent = 'No hay disponibles.';
+    return;
+  }
+
+  const imagen = await obtenerImagenPokemon(nombreElegido);
+  const nuevoPokemon = new Pokemon(nombreElegido, tipo);
+  
+  nuevoPokemon.sprite= imagen;
+  ent.equipo.agregar(nuevoPokemon);
+
+  guardarEntrenadores();
+  renderEditor();
+  renderListaEntrenadores();
+}
+
+async function manejarGuardarEntrenador() {
+  const ent = entrenadores.find(x => x.id === entrenadorSeleccionadoId);
+  const sel = Array.from(document.getElementsByName('pokemonInicial')).find(r => r.checked);
+  if (sel) {
+    const nombreIni = sel.value;
+    const imagen = await obtenerImagenPokemon(nombreIni);
+    if (!ent.equipo.tienePokemon(nombreIni) && ent.equipo.puedeAgregar()) {
+      const nuevoPokemonInicial = new Pokemon(nombreIni, 'inicial');
+      nuevoPokemonInicial.sprite = imagen;
+      ent.equipo.pokemones.unshift(nuevoPokemonInicial);
+      ent.equipo.pokemones = ent.equipo.pokemones.slice(0, ent.equipo.max);
+    }
+  }
+  guardarEntrenadores();
+  renderEditor();
+  renderListaEntrenadores();
+  
+  swal({
+    title: "Guardado",
+    text: "Has editado correctamente los cambios en el equipo Pokemon",
+    icon: "success",
+  });
+}
+
+function renderEditor() {
+  const editor = document.getElementById('editorEquipo');
+  if (!entrenadorSeleccionadoId) { editor.classList.add('d-none'); return; }
+  const ent = entrenadores.find(x => x.id === entrenadorSeleccionadoId);
+  editor.classList.remove('d-none');
+  document.getElementById('tituloEditor').textContent = `Editor: ${ent.nombre}`;
+  const radios = document.getElementById('radiosIniciales');
+  radios.innerHTML = '';
+  POKEMON_INICIALES.forEach(pokemonnuevo => {
+    const id = `ini_${pokemonnuevo.nombre}`;
+    const div = document.createElement('div');
+    div.className = 'form-check';
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'pokemonInicial';
+    input.id = id;
+    input.value = pokemonnuevo.nombre;
+    input.className = 'form-check-input';
+    if (ent.equipo.pokemones.some(pk => pk.nombre === pokemonnuevo.nombre)) input.checked = true;
+    const lbl = document.createElement('label');
+    lbl.className = 'form-check-label';
+    lbl.htmlFor = id;
+    lbl.innerHTML = `<img src="${pokemonnuevo.sprite}" class="sprite"> ${pokemonnuevo.nombre}`;
+    div.appendChild(input);
+    div.appendChild(lbl);
+    radios.appendChild(div);
+  });
+  const listaDiv = document.getElementById('listaPokemonEquipo');
+  listaDiv.innerHTML = '';
+  ent.equipo.pokemones.forEach(poke => {
+    const row = document.createElement('div');
+    row.className = 'card-pokemon d-flex align-items-center gap-3';
+    row.innerHTML = 
+    `
+      <img src="${poke.sprite || 'assets/img/placeholder.png'}" alt="${poke.nombre}" widthtalize">${poke.nombre}</strong>
+        <small class="text-muted">${Array.isArray(poke.tipos) ? poke.tipos.join(', ') : poke.tipos}</small>
+      </div>
+    `;
+    
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-outline-danger ms-auto';
+    btn.textContent = 'Quitar';
+    btn.onclick = () => {
+      ent.equipo.quitar(poke.nombre);
+      guardarEntrenadores();
+      renderEditor();
+      renderListaEntrenadores();
+      swal({
+        title: "Guardado",
+        text: "Has editado correctamente los cambios en el equipo Pokemon",
+        icon: "success",
+      });
+    };
+    row.appendChild(btn);
+    listaDiv.appendChild(row);
+  });
+}
+
+function inicializarApp() {
+  entrenadores = cargarEntrenadores();
+  renderListaEntrenadores();
+  poblarTipos();
+  document.getElementById('btnCrearEntrenador').addEventListener('click', crearEntrenadorDesdeUI);
+  document.getElementById('btnAgregarPorTipo').addEventListener('click', manejarAgregarPorTipo);
+  document.getElementById('btnGuardarEntrenador').addEventListener('click', manejarGuardarEntrenador);
+  cargarPokemonIniciales();
+  swal ("Inicio de la aplicación","Aplicación Iniciada");
+}
+
+async function obtenerImagenPokemon(nombre) {
+  try {
+    const resp = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`);
+    if (!resp.ok) return '';
+    const data = await resp.json();
+    return data.sprites.front_default || '';
+  } catch {
+    swal({
+      title: "Advertencia",
+      text: "No es posible obtener la imagen del pokemon seleccionado",
+      icon: "warning",
+    });
+    return '';
+  }
+}
+
+inicializarApp();
