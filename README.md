@@ -29,5 +29,5 @@ Estructura
 ├─ pokemonIniciales.json
 └─ README.md
 
-Autor
+Autor: Alvaro Cabezas
 Proyecto final del curso JavaScript en Coderhouse.
