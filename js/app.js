@@ -289,7 +289,7 @@ function renderEditor() {
     if (
       ent.equipo.pokemones.some((poke) => poke.nombre === pokemonNuevo.nombre)
     )
-      input.checked = true;
+      input.checked = false;
     const lbl = document.createElement("label");
     lbl.className = "form-check-label";
     lbl.htmlFor = id;
