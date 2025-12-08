@@ -263,7 +263,6 @@ async function manejarGuardarEntrenador() {
     text: "Has editado correctamente los cambios en el equipo Pokemon",
     icon: "success",
   });
-  seleccion.checked = false;
 }
 
 function renderEditor() {
